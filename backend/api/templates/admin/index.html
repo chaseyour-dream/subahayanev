@@ -1,0 +1,211 @@
+{% extends "admin/index.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+/* Make content area wider */
+#content {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+.dashboard-container {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+    border-radius: 20px;
+    padding: 50px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    margin: -20px -20px 40px -20px;
+    width: calc(100% + 40px);
+}
+
+.dashboard-header {
+    color: white;
+    margin-bottom: 50px;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.dashboard-header .icon-large {
+    font-size: 72px;
+    opacity: 0.95;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+.dashboard-header-text h2 {
+    margin: 0;
+    font-size: 42px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.dashboard-header-text p {
+    margin: 15px 0 0 0;
+    opacity: 0.95;
+    font-size: 18px;
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+}
+
+@media (max-width: 1400px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+.stat-card {
+    background: white;
+    border-radius: 18px;
+    padding: 35px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+}
+
+.stat-card.visits::before {
+    background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+}
+
+.stat-card.contact::before {
+    background: linear-gradient(135deg, #be123c 0%, #e11d48 100%);
+}
+
+.stat-card.testdrive::before {
+    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+}
+
+.stat-card.unread::before {
+    background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+}
+
+.stat-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+.stat-card .icon-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    font-size: 40px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.stat-card.visits .icon-wrapper {
+    background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+}
+
+.stat-card.contact .icon-wrapper {
+    background: linear-gradient(135deg, #be123c 0%, #e11d48 100%);
+}
+
+.stat-card.testdrive .icon-wrapper {
+    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+}
+
+.stat-card.unread .icon-wrapper {
+    background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+}
+
+.stat-card .number {
+    font-size: 52px;
+    font-weight: 700;
+    margin: 20px 0;
+    line-height: 1;
+    color: #0f172a;
+}
+
+.stat-card .label {
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #1e293b;
+}
+
+.stat-card .sublabel {
+    font-size: 15px;
+    margin-top: 10px;
+    color: #475569;
+    font-weight: 500;
+}
+
+/* Hide the default Django admin sections */
+#content-main > div {
+    display: none !important;
+}
+
+/* Show only our custom dashboard */
+.dashboard-container {
+    display: block !important;
+}
+</style>
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div class="icon-large">📊</div>
+        <div class="dashboard-header-text">
+            <h2>Shubhayaan EV Dashboard</h2>
+            <p>Welcome back! Here's an overview of your website statistics and enquiries</p>
+        </div>
+    </div>
+
+    <div class="dashboard-stats">
+        <div class="stat-card visits">
+            <div class="icon-wrapper">🌐</div>
+            <div class="number">{{ total_visits|default:0 }}</div>
+            <div class="label">Total Website Visits</div>
+            <div class="sublabel">All time visits tracked</div>
+        </div>
+        
+        <div class="stat-card contact">
+            <div class="icon-wrapper">✉️</div>
+            <div class="number">{{ total_contact_enquiries|default:0 }}</div>
+            <div class="label">Contact Enquiries</div>
+            <div class="sublabel">{{ unread_contact|default:0 }} unread message{{ unread_contact|pluralize }}</div>
+        </div>
+        
+        <div class="stat-card testdrive">
+            <div class="icon-wrapper">🚗</div>
+            <div class="number">{{ total_testdrive_enquiries|default:0 }}</div>
+            <div class="label">Test Drive Enquiries</div>
+            <div class="sublabel">{{ unread_testdrive|default:0 }} unread request{{ unread_testdrive|pluralize }}</div>
+        </div>
+        
+        <div class="stat-card unread">
+            <div class="icon-wrapper">🔔</div>
+            <div class="number">{{ total_unread|default:0 }}</div>
+            <div class="label">Total Unread Messages</div>
+            <div class="sublabel">Requires your attention</div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

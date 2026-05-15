@@ -4,7 +4,8 @@ from .views import (hero_content, site_logo, about_content, page_hero, ServiceVi
                     ContactEnquiryViewSet, ChargingStationViewSet, 
                     OfferViewSet, GalleryImageViewSet, TestDriveEnquiryViewSet,
                     ChatbotFAQViewSet, create_chat_session, get_chat_session, send_message, CustomerReviewViewSet,
-                    owner_message, TeamMemberViewSet, JourneyViewSet)
+                    owner_message, TeamMemberViewSet, JourneyViewSet,
+                    company_vision, company_mission, company_goals, future_plans, company_history)
 
 router = DefaultRouter()
 router.register(r'services', ServiceViewSet)
@@ -25,6 +26,11 @@ urlpatterns = [
     path('about/', about_content, name='about-content'),
     path('owner-message/', owner_message, name='owner-message'),
     path('page-hero/<str:page>/', page_hero, name='page-hero'),
+    path('company-vision/', company_vision, name='company-vision'),
+    path('company-mission/', company_mission, name='company-mission'),
+    path('company-goals/', company_goals, name='company-goals'),
+    path('future-plans/', future_plans, name='future-plans'),
+    path('company-history/', company_history, name='company-history'),
     path('chat/session/', create_chat_session, name='create-chat-session'),
     path('chat/session/<str:session_id>/', get_chat_session, name='get-chat-session'),
     path('chat/session/<str:session_id>/message/', send_message, name='send-message'),

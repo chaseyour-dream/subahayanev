@@ -31,9 +31,12 @@ export default function GalleryPage() {
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/gallery/`)
         console.log('Gallery data:', response.data)
-        setItems(response.data)
+        // Handle paginated response from Django REST Framework
+        const galleryData = response.data.results || response.data
+        setItems(Array.isArray(galleryData) ? galleryData : [])
       } catch (error) {
         console.error('Error fetching gallery:', error)
+        setItems([])
       } finally {
         setLoading(false)
       }

@@ -57,14 +57,15 @@ export default function Navbar() {
     { href: '/products', label: 'PRODUCTS' },
     { href: '/gallery', label: 'GALLERY' },
     { href: '/journey', label: 'JOURNEY' },
+    { href: '/history', label: 'HISTORY' },
   ]
 
   return (
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ${
         isScrolled
-          ? 'bg-white/98 backdrop-blur-lg shadow-xl'
-          : 'bg-gradient-to-b from-black/50 to-transparent backdrop-blur-sm'
+          ? 'bg-white/98 shadow-xl'
+          : 'bg-transparent'
       } ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}

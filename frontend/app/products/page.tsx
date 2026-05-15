@@ -5,7 +5,7 @@ export default function ProductsPage() {
   return (
     <>
       <PageHero page="products" />
-      <ProductsSection />
+      <ProductsSection showHeader={false} />
     </>
   )
 }

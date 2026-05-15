@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (HeroContent, SiteLogo, AboutContent, Service, ServiceLocationDetail, Product, PageHero, 
                      ContactEnquiry, ChargingStation, Offer, GalleryImage, TestDriveEnquiry,
-                     ChatbotFAQ, ChatSession, ChatMessage, CustomerReview, OwnerMessage, TeamMember, Journey, JourneyGallery)
+                     ChatbotFAQ, ChatSession, ChatMessage, CustomerReview, OwnerMessage, TeamMember, Journey, JourneyGallery,
+                     CompanyVision, CompanyMission, CompanyGoal, FuturePlan, CompanyHistory)
 
 class HeroContentSerializer(serializers.ModelSerializer):
     media_file = serializers.SerializerMethodField()
@@ -66,6 +67,7 @@ class ServiceSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    display_category = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
@@ -78,6 +80,12 @@ class ProductSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.image.url)
             return obj.image.url
         return None
+    
+    def get_display_category(self, obj):
+        """Return custom category if 'other' is selected, otherwise return the choice display"""
+        if obj.category == 'other' and obj.custom_category:
+            return obj.custom_category
+        return obj.get_category_display()
 
 
 class PageHeroSerializer(serializers.ModelSerializer):
@@ -281,4 +289,83 @@ class JourneySerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.cover_image.url)
             return obj.cover_image.url
+        return None
+
+class CompanyVisionSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CompanyVision
+        fields = '__all__'
+    
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+class CompanyMissionSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CompanyMission
+        fields = '__all__'
+    
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+class CompanyGoalSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    media_display_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CompanyGoal
+        fields = '__all__'
+    
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+    
+    def get_media_display_url(self, obj):
+        """Return the appropriate media URL for display"""
+        request = self.context.get('request')
+        media_url = obj.get_media_url()
+        
+        if media_url:
+            # If it's a relative URL (uploaded image), make it absolute
+            if media_url.startswith('/') and request:
+                return request.build_absolute_uri(media_url)
+            # Otherwise return as-is (external URL or Google Drive)
+            return media_url
+        return None
+
+class FuturePlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FuturePlan
+        fields = '__all__'
+
+class CompanyHistorySerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CompanyHistory
+        fields = '__all__'
+    
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
         return None

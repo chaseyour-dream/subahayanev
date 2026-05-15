@@ -22,9 +22,12 @@ export default function JourneyPage() {
     const fetchJourneys = async () => {
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/journey/`)
-        setJourneys(response.data)
+        // Handle paginated response from Django REST Framework
+        const journeysData = response.data.results || response.data
+        setJourneys(Array.isArray(journeysData) ? journeysData : [])
       } catch (error) {
         console.error('Error fetching journeys:', error)
+        setJourneys([])
       } finally {
         setLoading(false)
       }
@@ -46,21 +49,6 @@ export default function JourneyPage() {
       
       <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="text-gray-900">OUR</span>
-              <span className="text-red-600 ml-3">JOURNEY</span>
-            </h2>
-            <div className="w-24 h-1 bg-red-600 mx-auto mb-6"></div>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Explore the milestones and memories that have shaped our path
-            </p>
-          </motion.div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {journeys.map((journey, index) => (
               <motion.div

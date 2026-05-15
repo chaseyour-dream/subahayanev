@@ -1,5 +1,18 @@
 from django.db import models
 
+class WebsiteVisit(models.Model):
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField(blank=True)
+    page_url = models.CharField(max_length=500, blank=True)
+    visited_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = "Website Visits"
+        ordering = ['-visited_at']
+    
+    def __str__(self):
+        return f"Visit from {self.ip_address} at {self.visited_at}"
+
 class HeroContent(models.Model):
     MEDIA_CHOICES = [
         ('image', 'Image'),
@@ -11,10 +24,12 @@ class HeroContent(models.Model):
     media_type = models.CharField(max_length=10, choices=MEDIA_CHOICES, default='image')
     media_file = models.FileField(upload_to='hero/')
     is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0, help_text="Lower number shows first")
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         verbose_name_plural = "Hero Content"
+        ordering = ['order', 'id']
     
     def __str__(self):
         return self.title
@@ -41,6 +56,100 @@ class AboutContent(models.Model):
     def __str__(self):
         return self.title
 
+class CompanyVision(models.Model):
+    title = models.CharField(max_length=200, default="Our Vision")
+    description = models.TextField()
+    icon = models.CharField(max_length=50, blank=True, help_text="Icon name or emoji")
+    image = models.ImageField(upload_to='company/', blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0)
+    
+    class Meta:
+        verbose_name_plural = "Company Vision"
+        ordering = ['order']
+    
+    def __str__(self):
+        return self.title
+
+class CompanyMission(models.Model):
+    title = models.CharField(max_length=200, default="Our Mission")
+    description = models.TextField()
+    icon = models.CharField(max_length=50, blank=True, help_text="Icon name or emoji")
+    image = models.ImageField(upload_to='company/', blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0)
+    
+    class Meta:
+        verbose_name_plural = "Company Mission"
+        ordering = ['order']
+    
+    def __str__(self):
+        return self.title
+
+class CompanyGoal(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    icon = models.CharField(max_length=50, blank=True, help_text="Icon name or emoji (used as fallback if no image)")
+    image = models.ImageField(upload_to='goals/', blank=True, null=True, help_text="Upload an image")
+    media_url = models.URLField(blank=True, help_text="Or provide a Google Drive/external image URL")
+    target_year = models.IntegerField(blank=True, null=True, help_text="Target year for this goal")
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0)
+    
+    class Meta:
+        verbose_name_plural = "Company Goals"
+        ordering = ['order']
+    
+    def __str__(self):
+        return self.title
+    
+    def get_media_url(self):
+        """Return image URL or external media URL"""
+        if self.image:
+            return self.image.url
+        elif self.media_url:
+            # Handle Google Drive links
+            if 'drive.google.com' in self.media_url:
+                # Convert Google Drive share link to direct link
+                if '/file/d/' in self.media_url:
+                    file_id = self.media_url.split('/file/d/')[1].split('/')[0]
+                    return f'https://drive.google.com/uc?export=view&id={file_id}'
+                elif 'id=' in self.media_url:
+                    file_id = self.media_url.split('id=')[1].split('&')[0]
+                    return f'https://drive.google.com/uc?export=view&id={file_id}'
+            return self.media_url
+        return None
+
+class FuturePlan(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    icon = models.CharField(max_length=50, blank=True, help_text="Icon name or emoji")
+    timeline = models.CharField(max_length=100, blank=True, help_text="e.g., 2025-2027, Next 5 years")
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0)
+    
+    class Meta:
+        verbose_name_plural = "Future Plans"
+        ordering = ['order']
+    
+    def __str__(self):
+        return self.title
+
+class CompanyHistory(models.Model):
+    year = models.IntegerField(help_text="Year of the milestone")
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    image = models.ImageField(upload_to='history/', blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0, help_text="Lower number shows first")
+    
+    class Meta:
+        verbose_name_plural = "Company History"
+        ordering = ['order', 'year']
+    
+    def __str__(self):
+        return f"{self.year} - {self.title}"
+
 class PageHero(models.Model):
     PAGE_CHOICES = [
         ('about', 'About Us'),
@@ -50,6 +159,7 @@ class PageHero(models.Model):
         ('gallery', 'Gallery'),
         ('test-drive', 'Test Drive'),
         ('journey', 'Journey'),
+        ('history', 'History'),
     ]
     
     page = models.CharField(max_length=50, choices=PAGE_CHOICES, unique=True)
@@ -69,6 +179,7 @@ class ContactEnquiry(models.Model):
     phone = models.CharField(max_length=20)
     subject = models.CharField(max_length=200)
     message = models.TextField()
+    is_read = models.BooleanField(default=False, help_text="Mark as read")
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -155,10 +266,12 @@ class Product(models.Model):
     CATEGORY_CHOICES = [
         ('kaweii', 'Kaweii'),
         ('nevko', 'Nevko'),
+        ('other', 'Other'),
     ]
     
     name = models.CharField(max_length=200)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    custom_category = models.CharField(max_length=100, blank=True, help_text="Enter custom category if 'Other' is selected")
     description = models.TextField()
     price = models.CharField(max_length=100)
     specifications = models.TextField()
@@ -233,12 +346,13 @@ class GalleryImage(models.Model):
 
 class TestDriveEnquiry(models.Model):
     name = models.CharField(max_length=200)
-    email = models.EmailField()
+    email = models.EmailField(blank=True)
     phone = models.CharField(max_length=20)
     preferred_date = models.DateField()
     preferred_time = models.TimeField()
     vehicle_interest = models.CharField(max_length=200)
     message = models.TextField(blank=True)
+    is_read = models.BooleanField(default=False, help_text="Mark as read")
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -305,7 +419,7 @@ class CustomerReview(models.Model):
     
     client_name = models.CharField(max_length=200)
     model_selected = models.CharField(max_length=200)
-    photo = models.ImageField(upload_to='reviews/')
+    photo = models.ImageField(upload_to='reviews/', blank=True, null=True)
     review_description = models.TextField()
     rating = models.IntegerField(default=5, help_text="Rating out of 5")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

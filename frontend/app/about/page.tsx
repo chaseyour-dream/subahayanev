@@ -6,6 +6,9 @@ import { motion } from 'framer-motion'
 import PageHero from '@/components/PageHero'
 import AboutSection from '@/components/AboutSection'
 import TestDriveSection from '@/components/TestDriveSection'
+import CompanyVisionMission from '@/components/CompanyVisionMission'
+import CompanyGoals from '@/components/CompanyGoals'
+import FuturePlans from '@/components/FuturePlans'
 import { FaEnvelope, FaPhone, FaQuoteLeft } from 'react-icons/fa'
 
 interface OwnerMessage {
@@ -45,9 +48,12 @@ export default function AboutPage() {
     const fetchTeamMembers = async () => {
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/team-members/`)
-        setTeamMembers(response.data)
+        // Handle paginated response from Django REST Framework
+        const teamData = response.data.results || response.data
+        setTeamMembers(Array.isArray(teamData) ? teamData : [])
       } catch (error) {
         console.error('Error fetching team members:', error)
+        setTeamMembers([])
       }
     }
 
@@ -63,7 +69,7 @@ export default function AboutPage() {
     <>
       <PageHero page="about" />
       <AboutSection />
-
+      
       {/* Owner Message Section */}
       {ownerMessage && (
         <section className="py-20 bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900 relative overflow-hidden">
@@ -147,10 +153,19 @@ export default function AboutPage() {
         </section>
       )}
 
+      {/* New Sections */}
+      <CompanyGoals />
+      <CompanyVisionMission />
+      <FuturePlans />
+
       {/* Team Section */}
       {teamMembers.length > 0 && (
-        <section className="py-20 bg-gradient-to-b from-white to-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-20 bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900 relative overflow-hidden">
+          {/* Decorative Elements */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl"></div>
+          
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -158,11 +173,11 @@ export default function AboutPage() {
               className="text-center mb-16"
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                <span className="text-gray-900">OUR</span>
-                <span className="text-red-600 ml-3">TEAM</span>
+                <span className="text-white">OUR</span>
+                <span className="text-red-500 ml-3">TEAM</span>
               </h2>
-              <div className="w-24 h-1 bg-red-600 mx-auto mb-8"></div>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              <div className="w-24 h-1 bg-gradient-to-r from-red-500 to-red-600 mx-auto mb-8"></div>
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
                 Meet the dedicated professionals driving our vision forward
               </p>
             </motion.div>
@@ -174,7 +189,7 @@ export default function AboutPage() {
                 className={`px-8 py-3 rounded-full font-bold transition-all transform hover:scale-105 ${
                   selectedTeam === 'board'
                     ? 'bg-red-600 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 shadow border border-gray-200'
+                    : 'bg-slate-700 text-gray-300 hover:bg-slate-600 shadow border border-slate-600'
                 }`}
               >
                 Board of Directors 
@@ -184,7 +199,7 @@ export default function AboutPage() {
                 className={`px-8 py-3 rounded-full font-bold transition-all transform hover:scale-105 ${
                   selectedTeam === 'technical'
                     ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 shadow border border-gray-200'
+                    : 'bg-slate-700 text-gray-300 hover:bg-slate-600 shadow border border-slate-600'
                 }`}
               >
                 Technical Team 
@@ -208,7 +223,7 @@ export default function AboutPage() {
                       : 'bg-gradient-to-r from-blue-600 to-cyan-600'
                   }`}></div>
                   
-                  <div className="relative bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-xl overflow-hidden group-hover:shadow-2xl transition-all duration-500 transform group-hover:-translate-y-3 flex flex-col h-full">
+                  <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl shadow-xl overflow-hidden group-hover:shadow-2xl transition-all duration-500 transform group-hover:-translate-y-3 flex flex-col h-full border border-slate-700">
                     {/* Photo Section */}
                     <div className="relative h-80 overflow-hidden flex-shrink-0">
                       {/* Photo */}
@@ -248,7 +263,7 @@ export default function AboutPage() {
                     <div className="p-6 space-y-5 flex-1 flex flex-col">
                       {/* Description */}
                       <div>
-                        <p className="text-gray-700 text-sm leading-relaxed">
+                        <p className="text-gray-300 text-sm leading-relaxed">
                           {member.description}
                         </p>
                       </div>
@@ -256,8 +271,8 @@ export default function AboutPage() {
                       {/* Divider */}
                       <div className={`h-px ${
                         selectedTeam === 'board' 
-                          ? 'bg-gradient-to-r from-transparent via-red-200 to-transparent' 
-                          : 'bg-gradient-to-r from-transparent via-blue-200 to-transparent'
+                          ? 'bg-gradient-to-r from-transparent via-red-500/30 to-transparent' 
+                          : 'bg-gradient-to-r from-transparent via-blue-500/30 to-transparent'
                       }`}></div>
 
                       {/* Contact Cards */}
@@ -267,8 +282,8 @@ export default function AboutPage() {
                           href={`mailto:${member.email}`}
                           className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-300 ${
                             selectedTeam === 'board'
-                              ? 'bg-red-50 hover:bg-red-100'
-                              : 'bg-blue-50 hover:bg-blue-100'
+                              ? 'bg-red-900/20 hover:bg-red-900/30 border border-red-800/30'
+                              : 'bg-blue-900/20 hover:bg-blue-900/30 border border-blue-800/30'
                           }`}
                         >
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
@@ -279,9 +294,9 @@ export default function AboutPage() {
                             <FaEnvelope className="text-white text-sm" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-0.5">Email</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-0.5">Email</p>
                             <p className={`text-sm font-semibold truncate ${
-                              selectedTeam === 'board' ? 'text-red-700' : 'text-blue-700'
+                              selectedTeam === 'board' ? 'text-red-400' : 'text-blue-400'
                             }`}>
                               {member.email}
                             </p>
@@ -293,8 +308,8 @@ export default function AboutPage() {
                           href={`tel:${member.phone}`}
                           className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-300 ${
                             selectedTeam === 'board'
-                              ? 'bg-red-50 hover:bg-red-100'
-                              : 'bg-blue-50 hover:bg-blue-100'
+                              ? 'bg-red-900/20 hover:bg-red-900/30 border border-red-800/30'
+                              : 'bg-blue-900/20 hover:bg-blue-900/30 border border-blue-800/30'
                           }`}
                         >
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
@@ -305,9 +320,9 @@ export default function AboutPage() {
                             <FaPhone className="text-white text-sm" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-0.5">Phone</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-0.5">Phone</p>
                             <p className={`text-sm font-semibold ${
-                              selectedTeam === 'board' ? 'text-red-700' : 'text-blue-700'
+                              selectedTeam === 'board' ? 'text-red-400' : 'text-blue-400'
                             }`}>
                               {member.phone}
                             </p>
@@ -329,12 +344,27 @@ export default function AboutPage() {
 
             {displayMembers.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No team members found in this category</p>
+                <p className="text-gray-400 text-lg">No team members found in this category</p>
               </div>
             )}
           </div>
         </section>
       )}
+
+      {/* Decorative Separator */}
+      <div className="relative py-8 bg-gradient-to-b from-gray-900 via-white to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-gray-400"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-lg shadow-red-500/50"></div>
+              <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse shadow-lg shadow-blue-500/50" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-lg shadow-green-500/50" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent via-gray-400 to-gray-300"></div>
+          </div>
+        </div>
+      </div>
 
       <TestDriveSection />
     </>

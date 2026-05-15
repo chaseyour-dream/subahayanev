@@ -30,9 +30,12 @@ export default function CustomerReviews() {
     const fetchReviews = async () => {
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reviews/`)
-        setReviews(response.data)
+        // Handle paginated response from Django REST Framework
+        const reviewsData = response.data.results || response.data
+        setReviews(Array.isArray(reviewsData) ? reviewsData : [])
       } catch (error) {
         console.error('Error fetching reviews:', error)
+        setReviews([])
       } finally {
         setLoading(false)
       }
@@ -185,12 +188,20 @@ export default function CustomerReviews() {
                       {/* Customer Photo */}
                       <div className="flex justify-center mb-6">
                         <div className="relative">
-                          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-red-600 shadow-lg">
-                            <img
-                              src={review.photo_url || review.photo}
-                              alt={review.client_name}
-                              className="w-full h-full object-cover"
-                            />
+                          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-red-600 shadow-lg bg-gray-200">
+                            {(review.photo_url || review.photo) ? (
+                              <img
+                                src={review.photo_url || review.photo}
+                                alt={review.client_name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-100 to-red-200">
+                                <span className="text-3xl font-bold text-red-600">
+                                  {review.client_name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
                           </div>
                           {/* Rating Badge */}
                           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-red-600 text-white px-3 py-1 rounded-full flex items-center gap-1 shadow-lg text-sm">
@@ -306,12 +317,20 @@ export default function CustomerReviews() {
                     {/* Customer Photo */}
                     <div className="flex-shrink-0">
                       <div className="relative">
-                        <div className="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl">
-                          <img
-                            src={selectedReview.photo_url || selectedReview.photo}
-                            alt={selectedReview.client_name}
-                            className="w-full h-full object-cover"
-                          />
+                        <div className="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl bg-white">
+                          {(selectedReview.photo_url || selectedReview.photo) ? (
+                            <img
+                              src={selectedReview.photo_url || selectedReview.photo}
+                              alt={selectedReview.client_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-100 to-red-200">
+                              <span className="text-5xl font-bold text-red-600">
+                                {selectedReview.client_name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         {/* Rating Badge */}
                         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-gray-900 px-4 py-1 rounded-full flex items-center gap-1 shadow-xl">

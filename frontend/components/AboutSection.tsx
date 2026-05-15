@@ -29,43 +29,6 @@ export default function AboutSection() {
   return (
     <section id="about" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="text-red-600">ABOUT US</span>
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
-            Leading the electric vehicle revolution in Nepal
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <motion.div 
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="w-16 h-1 bg-gradient-to-r from-transparent to-red-500 rounded-full origin-right"
-            ></motion.div>
-            <motion.div
-              initial={{ scale: 0 }}
-              whileInView={{ scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.6, type: 'spring' }}
-              className="w-3 h-3 bg-red-500 rounded-full"
-            ></motion.div>
-            <motion.div
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="w-16 h-1 bg-gradient-to-l from-transparent to-red-500 rounded-full origin-left"
-            ></motion.div>
-          </div>
-        </motion.div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -50 }}

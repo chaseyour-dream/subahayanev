@@ -1,9 +1,44 @@
 from django.contrib import admin
 from django import forms
 from django.utils.html import format_html
+from django.contrib.admin import AdminSite
 from .models import (HeroContent, SiteLogo, AboutContent, Service, ServiceLocationDetail, Product, PageHero, 
                      ContactEnquiry, ChargingStation, Offer, GalleryImage, TestDriveEnquiry,
-                     ChatbotFAQ, ChatSession, ChatMessage, CustomerReview, OwnerMessage, TeamMember, Journey, JourneyGallery)
+                     ChatbotFAQ, ChatSession, ChatMessage, CustomerReview, OwnerMessage, TeamMember, Journey, JourneyGallery,
+                     CompanyVision, CompanyMission, CompanyGoal, FuturePlan, CompanyHistory, WebsiteVisit)
+
+
+class CustomAdminSite(AdminSite):
+    site_header = "Shubhayaan EV Admin"
+    site_title = "Shubhayaan EV Admin Portal"
+    index_title = "Welcome to Shubhayaan EV Admin"
+    
+    def index(self, request, extra_context=None):
+        # Get statistics
+        total_visits = WebsiteVisit.objects.count()
+        total_contact_enquiries = ContactEnquiry.objects.count()
+        total_testdrive_enquiries = TestDriveEnquiry.objects.count()
+        unread_contact = ContactEnquiry.objects.filter(is_read=False).count()
+        unread_testdrive = TestDriveEnquiry.objects.filter(is_read=False).count()
+        total_unread = unread_contact + unread_testdrive
+        
+        # Add to context
+        extra_context = extra_context or {}
+        extra_context.update({
+            'total_visits': total_visits,
+            'total_contact_enquiries': total_contact_enquiries,
+            'total_testdrive_enquiries': total_testdrive_enquiries,
+            'unread_contact': unread_contact,
+            'unread_testdrive': unread_testdrive,
+            'total_unread': total_unread,
+        })
+        
+        return super().index(request, extra_context)
+
+
+# Replace default admin site
+admin.site = CustomAdminSite()
+admin.sites.site = admin.site
 
 @admin.register(HeroContent)
 class HeroContentAdmin(admin.ModelAdmin):
@@ -58,10 +93,32 @@ class ChargingStationAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'price', 'is_featured', 'created_at']
+    list_display = ['name', 'get_display_category', 'price', 'is_featured', 'created_at']
     list_filter = ['category', 'is_featured']
-    search_fields = ['name', 'description']
+    search_fields = ['name', 'description', 'custom_category']
     ordering = ['-created_at']
+    
+    def get_display_category(self, obj):
+        if obj.category == 'other' and obj.custom_category:
+            return obj.custom_category
+        return obj.get_category_display()
+    get_display_category.short_description = 'Category'
+    
+    class Media:
+        js = ('admin/js/product_category.js',)
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'category', 'custom_category', 'description', 'price', 'image')
+        }),
+        ('Specifications', {
+            'fields': ('specifications', 'battery_capacity', 'model', 'range_per_charge', 
+                      'charging_time', 'top_speed', 'seating_capacity')
+        }),
+        ('Display Options', {
+            'fields': ('is_featured',)
+        }),
+    )
 
 @admin.register(PageHero)
 class PageHeroAdmin(admin.ModelAdmin):
@@ -71,11 +128,23 @@ class PageHeroAdmin(admin.ModelAdmin):
 
 @admin.register(ContactEnquiry)
 class ContactEnquiryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'email', 'phone', 'subject', 'created_at']
-    list_filter = ['created_at']
+    list_display = ['name', 'email', 'phone', 'subject', 'is_read', 'created_at']
+    list_filter = ['is_read', 'created_at']
     search_fields = ['name', 'email', 'subject', 'message']
     readonly_fields = ['created_at']
     ordering = ['-created_at']
+    list_editable = ['is_read']
+    actions = ['mark_as_read', 'mark_as_unread']
+    
+    def mark_as_read(self, request, queryset):
+        updated = queryset.update(is_read=True)
+        self.message_user(request, f'{updated} enquiry(ies) marked as read.')
+    mark_as_read.short_description = 'Mark selected as read'
+    
+    def mark_as_unread(self, request, queryset):
+        updated = queryset.update(is_read=False)
+        self.message_user(request, f'{updated} enquiry(ies) marked as unread.')
+    mark_as_unread.short_description = 'Mark selected as unread'
 
 @admin.register(Offer)
 class OfferAdmin(admin.ModelAdmin):
@@ -111,11 +180,23 @@ class GalleryImageAdmin(admin.ModelAdmin):
 
 @admin.register(TestDriveEnquiry)
 class TestDriveEnquiryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'email', 'phone', 'vehicle_interest', 'preferred_date', 'created_at']
-    list_filter = ['preferred_date', 'created_at']
+    list_display = ['name', 'email', 'phone', 'vehicle_interest', 'preferred_date', 'is_read', 'created_at']
+    list_filter = ['is_read', 'preferred_date', 'created_at']
     search_fields = ['name', 'email', 'vehicle_interest']
     readonly_fields = ['created_at']
     ordering = ['-created_at']
+    list_editable = ['is_read']
+    actions = ['mark_as_read', 'mark_as_unread']
+    
+    def mark_as_read(self, request, queryset):
+        updated = queryset.update(is_read=True)
+        self.message_user(request, f'{updated} enquiry(ies) marked as read.')
+    mark_as_read.short_description = 'Mark selected as read'
+    
+    def mark_as_unread(self, request, queryset):
+        updated = queryset.update(is_read=False)
+        self.message_user(request, f'{updated} enquiry(ies) marked as unread.')
+    mark_as_unread.short_description = 'Mark selected as unread'
 
 @admin.register(ChatbotFAQ)
 class ChatbotFAQAdmin(admin.ModelAdmin):
@@ -337,3 +418,77 @@ class JourneyAdmin(admin.ModelAdmin):
             'description': 'This will be displayed in italic and justified text on the detail page.'
         }),
     )
+
+
+@admin.register(CompanyVision)
+class CompanyVisionAdmin(admin.ModelAdmin):
+    list_display = ['title', 'is_active', 'order']
+    list_filter = ['is_active']
+    search_fields = ['title', 'description']
+    ordering = ['order']
+
+@admin.register(CompanyMission)
+class CompanyMissionAdmin(admin.ModelAdmin):
+    list_display = ['title', 'is_active', 'order']
+    list_filter = ['is_active']
+    search_fields = ['title', 'description']
+    ordering = ['order']
+
+@admin.register(CompanyGoal)
+class CompanyGoalAdmin(admin.ModelAdmin):
+    list_display = ['title', 'target_year', 'has_media', 'is_active', 'order']
+    list_filter = ['is_active', 'target_year']
+    search_fields = ['title', 'description']
+    ordering = ['order']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'target_year', 'order', 'is_active')
+        }),
+        ('Media', {
+            'fields': ('icon', 'image', 'media_url'),
+            'description': 'You can either upload an image, provide a Google Drive/external URL, or use an icon/emoji as fallback.'
+        }),
+    )
+    
+    def has_media(self, obj):
+        return bool(obj.image or obj.media_url)
+    has_media.boolean = True
+    has_media.short_description = 'Has Media'
+
+@admin.register(FuturePlan)
+class FuturePlanAdmin(admin.ModelAdmin):
+    list_display = ['title', 'timeline', 'is_active', 'order']
+    list_filter = ['is_active']
+    search_fields = ['title', 'description', 'timeline']
+    ordering = ['order']
+
+@admin.register(CompanyHistory)
+class CompanyHistoryAdmin(admin.ModelAdmin):
+    list_display = ['year', 'title', 'is_active', 'order']
+    list_filter = ['is_active', 'year']
+    search_fields = ['title', 'description']
+    ordering = ['order', 'year']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('year', 'title', 'description', 'order', 'is_active')
+        }),
+        ('Media', {
+            'fields': ('image',)
+        }),
+    )
+
+@admin.register(WebsiteVisit)
+class WebsiteVisitAdmin(admin.ModelAdmin):
+    list_display = ['ip_address', 'page_url', 'visited_at']
+    list_filter = ['visited_at']
+    search_fields = ['ip_address', 'page_url']
+    readonly_fields = ['ip_address', 'user_agent', 'page_url', 'visited_at']
+    ordering = ['-visited_at']
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False

@@ -11,6 +11,7 @@ interface Product {
   id: number
   name: string
   category: string
+  display_category: string
   description: string
   price: string
   image: string
@@ -108,7 +109,7 @@ export default function ProductDetailPage() {
             >
               <div>
                 <span className="inline-block bg-red-600 text-white px-4 py-2 rounded-full font-semibold text-sm uppercase tracking-wide mb-4">
-                  {product.category}
+                  {product.display_category}
                 </span>
                 <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                   {product.name}

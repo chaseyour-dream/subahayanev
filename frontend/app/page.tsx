@@ -133,6 +133,7 @@ export default function Home() {
       <HeroSection />
       <ServicesSection />
       <OffersSection />
+      <div className="py-2 bg-white"></div>
       <ChargingStationsSection />
       <ProductsSection />
       <AccordionGallery />

@@ -20,9 +20,12 @@ export default function OffersSection() {
     const fetchOffers = async () => {
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/offers/`)
-        setOffers(response.data)
+        // Handle paginated response from Django REST Framework
+        const offersData = response.data.results || response.data
+        setOffers(Array.isArray(offersData) ? offersData : [])
       } catch (error) {
         console.error('Error fetching offers:', error)
+        setOffers([])
       }
     }
     fetchOffers()

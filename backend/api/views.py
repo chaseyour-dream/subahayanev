@@ -1,25 +1,49 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
+from django_filters.rest_framework import DjangoFilterBackend
+from django.core.mail import send_mail
+from django.conf import settings
 from .models import (HeroContent, SiteLogo, AboutContent, Service, Product, PageHero, 
                      ContactEnquiry, ChargingStation, Offer, GalleryImage, TestDriveEnquiry,
-                     ChatbotFAQ, ChatSession, ChatMessage, CustomerReview, OwnerMessage, TeamMember, Journey, JourneyGallery)
+                     ChatbotFAQ, ChatSession, ChatMessage, CustomerReview, OwnerMessage, TeamMember, Journey, JourneyGallery,
+                     CompanyVision, CompanyMission, CompanyGoal, FuturePlan, CompanyHistory)
 from .serializers import (HeroContentSerializer, SiteLogoSerializer, AboutContentSerializer, ServiceSerializer, 
                           ProductSerializer, PageHeroSerializer, ContactEnquirySerializer,
                           ChargingStationSerializer, OfferSerializer, GalleryImageSerializer, TestDriveEnquirySerializer,
                           ChatbotFAQSerializer, ChatSessionSerializer, ChatMessageSerializer, CustomerReviewSerializer,
-                          OwnerMessageSerializer, TeamMemberSerializer, JourneySerializer)
+                          OwnerMessageSerializer, TeamMemberSerializer, JourneySerializer,
+                          CompanyVisionSerializer, CompanyMissionSerializer, CompanyGoalSerializer, FuturePlanSerializer, CompanyHistorySerializer)
+from .pagination import StandardResultsSetPagination
 import uuid
+
+
+class IsAdminOrReadOnly(permissions.BasePermission):
+    """
+    Custom permission to only allow admins to edit objects.
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user and request.user.is_staff
+
+
+class IsAdmin(permissions.BasePermission):
+    """
+    Custom permission to only allow admins.
+    """
+    def has_permission(self, request, view):
+        return request.user and request.user.is_staff
 
 @api_view(['GET'])
 def hero_content(request):
-    hero = HeroContent.objects.filter(is_active=True).first()
-    if hero:
-        serializer = HeroContentSerializer(hero, context={'request': request})
+    heroes = HeroContent.objects.filter(is_active=True).order_by('order', 'id')
+    if heroes.exists():
+        serializer = HeroContentSerializer(heroes, many=True, context={'request': request})
         return Response(serializer.data)
-    return Response({})
+    return Response([])
 
 @api_view(['GET'])
 def site_logo(request):
@@ -46,53 +70,174 @@ def page_hero(request, page):
     except PageHero.DoesNotExist:
         return Response({}, status=status.HTTP_404_NOT_FOUND)
 
-class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
+class ServiceViewSet(viewsets.ModelViewSet):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['order', 'title']
+    ordering = ['order']
 
-class ChargingStationViewSet(viewsets.ReadOnlyModelViewSet):
+
+class ChargingStationViewSet(viewsets.ModelViewSet):
     queryset = ChargingStation.objects.all()
     serializer_class = ChargingStationSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['district', 'charging_type']
+    ordering_fields = ['order', 'name', 'district']
+    ordering = ['order']
 
-class ProductViewSet(viewsets.ReadOnlyModelViewSet):
+
+class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    
-    def get_queryset(self):
-        queryset = Product.objects.all()
-        category = self.request.query_params.get('category', None)
-        if category:
-            queryset = queryset.filter(category=category)
-        return queryset
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['category', 'is_featured']
+    ordering_fields = ['created_at', 'name', 'price']
+    ordering = ['-created_at']
 
-class OfferViewSet(viewsets.ReadOnlyModelViewSet):
+
+class OfferViewSet(viewsets.ModelViewSet):
     queryset = Offer.objects.filter(is_active=True)
     serializer_class = OfferSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['order', 'created_at']
+    ordering = ['order']
 
-class GalleryImageViewSet(viewsets.ReadOnlyModelViewSet):
+
+class GalleryImageViewSet(viewsets.ModelViewSet):
     queryset = GalleryImage.objects.all()
     serializer_class = GalleryImageSerializer
-    
-    def get_queryset(self):
-        queryset = GalleryImage.objects.all()
-        category = self.request.query_params.get('category', None)
-        if category:
-            queryset = queryset.filter(category=category)
-        return queryset
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['category', 'media_type']
+    ordering_fields = ['order', 'created_at']
+    ordering = ['order']
+
 
 class ContactEnquiryViewSet(viewsets.ModelViewSet):
     queryset = ContactEnquiry.objects.all()
     serializer_class = ContactEnquirySerializer
-    http_method_names = ['post']
+    permission_classes = [permissions.AllowAny]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        # Only admins can view all inquiries
+        if self.request.user and self.request.user.is_staff:
+            return ContactEnquiry.objects.all()
+        # Non-admins can only create
+        return ContactEnquiry.objects.none()
+    
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.AllowAny()]
+        return [IsAdmin()]
+    
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        
+        # Send email notification
+        try:
+            subject = f'New Contact Enquiry: {instance.subject}'
+            message = f"""
+New Contact Enquiry Received
+
+Name: {instance.name}
+Email: {instance.email}
+Phone: {instance.phone}
+Subject: {instance.subject}
+
+Message:
+{instance.message}
+
+---
+This is an automated notification from Shubhayaan EV Website.
+            """
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.ADMIN_EMAIL],
+                fail_silently=True,
+            )
+        except Exception as e:
+            print(f"Error sending email: {e}")
+
 
 class TestDriveEnquiryViewSet(viewsets.ModelViewSet):
     queryset = TestDriveEnquiry.objects.all()
     serializer_class = TestDriveEnquirySerializer
-    http_method_names = ['post']
+    permission_classes = [permissions.AllowAny]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'preferred_date']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        # Only admins can view all bookings
+        if self.request.user and self.request.user.is_staff:
+            return TestDriveEnquiry.objects.all()
+        # Non-admins can only create
+        return TestDriveEnquiry.objects.none()
+    
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.AllowAny()]
+        return [IsAdmin()]
+    
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        
+        # Send email notification
+        try:
+            subject = f'New Test Drive Request: {instance.vehicle_interest}'
+            message = f"""
+New Test Drive Request Received
 
-class ChatbotFAQViewSet(viewsets.ReadOnlyModelViewSet):
+Name: {instance.name}
+Email: {instance.email if instance.email else 'Not provided'}
+Phone: {instance.phone}
+Vehicle Interest: {instance.vehicle_interest}
+Preferred Date: {instance.preferred_date.strftime('%B %d, %Y')}
+Preferred Time: {instance.preferred_time.strftime('%I:%M %p')}
+
+Additional Message:
+{instance.message if instance.message else 'No additional message'}
+
+---
+This is an automated notification from Shubhayaan EV Website.
+            """
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.ADMIN_EMAIL],
+                fail_silently=True,
+            )
+        except Exception as e:
+            print(f"Error sending email: {e}")
+
+class ChatbotFAQViewSet(viewsets.ModelViewSet):
     queryset = ChatbotFAQ.objects.filter(is_active=True)
     serializer_class = ChatbotFAQSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['order', 'created_at']
+    ordering = ['order']
 
 @api_view(['POST'])
 def create_chat_session(request):
@@ -131,6 +276,11 @@ def send_message(request, session_id):
 class CustomerReviewViewSet(viewsets.ModelViewSet):
     serializer_class = CustomerReviewSerializer
     parser_classes = (MultiPartParser, FormParser)
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['rating', 'status']
+    ordering_fields = ['created_at', 'rating']
+    ordering = ['-created_at']
     
     def get_queryset(self):
         # For GET requests, only return approved reviews
@@ -139,21 +289,20 @@ class CustomerReviewViewSet(viewsets.ModelViewSet):
         # For POST requests (creating), return all
         return CustomerReview.objects.all()
     
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.AllowAny()]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            return [IsAdmin()]
+        return [permissions.AllowAny()]
+    
     def get_serializer_context(self):
         return {'request': self.request}
     
     def create(self, request, *args, **kwargs):
-        print("=== Review Creation Debug ===")
-        print("Request data:", request.data)
-        print("Request files:", request.FILES)
-        print("Photo in files:", 'photo' in request.FILES)
-        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        
-        print("Created review ID:", serializer.instance.id)
-        print("Photo saved:", serializer.instance.photo)
         
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -166,23 +315,62 @@ def owner_message(request):
         return Response(serializer.data)
     return Response({})
 
-class TeamMemberViewSet(viewsets.ReadOnlyModelViewSet):
+class TeamMemberViewSet(viewsets.ModelViewSet):
     serializer_class = TeamMemberSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['team_type', 'is_active']
+    ordering_fields = ['order', 'team_type', 'name']
+    ordering = ['team_type', 'order']
     
     def get_queryset(self):
         queryset = TeamMember.objects.filter(is_active=True)
-        team_type = self.request.query_params.get('team_type', None)
-        if team_type:
-            queryset = queryset.filter(team_type=team_type)
         return queryset
     
     def get_serializer_context(self):
         return {'request': self.request}
 
 
-class JourneyViewSet(viewsets.ReadOnlyModelViewSet):
+class JourneyViewSet(viewsets.ModelViewSet):
     queryset = Journey.objects.filter(is_active=True)
     serializer_class = JourneySerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['order', 'created_at']
+    ordering = ['order']
     
     def get_serializer_context(self):
         return {'request': self.request}
+
+
+@api_view(['GET'])
+def company_vision(request):
+    visions = CompanyVision.objects.filter(is_active=True).order_by('order')
+    serializer = CompanyVisionSerializer(visions, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def company_mission(request):
+    missions = CompanyMission.objects.filter(is_active=True).order_by('order')
+    serializer = CompanyMissionSerializer(missions, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def company_goals(request):
+    goals = CompanyGoal.objects.filter(is_active=True).order_by('order')
+    serializer = CompanyGoalSerializer(goals, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def future_plans(request):
+    plans = FuturePlan.objects.filter(is_active=True).order_by('order')
+    serializer = FuturePlanSerializer(plans, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def company_history(request):
+    history = CompanyHistory.objects.filter(is_active=True).order_by('order', 'year')
+    serializer = CompanyHistorySerializer(history, many=True, context={'request': request})
+    return Response(serializer.data)

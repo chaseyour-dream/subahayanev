@@ -59,9 +59,12 @@ export default function Chatbot() {
     try {
       const response = await fetch(`${API_URL}/chatbot-faq/`)
       const data = await response.json()
-      setFaqs(data)
+      // Handle paginated response from Django REST Framework
+      const faqsData = data.results || data
+      setFaqs(Array.isArray(faqsData) ? faqsData : [])
     } catch (error) {
       console.error('Error fetching FAQs:', error)
+      setFaqs([])
     }
   }
 

@@ -27,20 +27,25 @@ export default function AccordionGallery() {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/gallery/`)
         console.log('Gallery API Response:', response.data)
         
+        // Handle paginated response
+        const galleryData = response.data.results || response.data
+        const dataArray = Array.isArray(galleryData) ? galleryData : []
+        
         // First try to get items with order 1-5
-        let filteredItems = response.data
+        let filteredItems = dataArray
           .filter((item: AccordionItem) => item.order >= 1 && item.order <= 5)
           .sort((a: AccordionItem, b: AccordionItem) => a.order - b.order)
         
         // If no items with order 1-5, just take the first 5 items
         if (filteredItems.length === 0) {
-          filteredItems = response.data.slice(0, 5)
+          filteredItems = dataArray.slice(0, 5)
         }
         
         console.log('Filtered Items:', filteredItems)
         setItems(filteredItems)
       } catch (error) {
         console.error('Error fetching gallery:', error)
+        setItems([])
       } finally {
         setLoading(false)
       }

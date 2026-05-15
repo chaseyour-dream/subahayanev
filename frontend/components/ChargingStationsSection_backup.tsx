@@ -21,9 +21,12 @@ export default function ChargingStationsSection() {
     const fetchStations = async () => {
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/charging-stations/`)
-        setStations(response.data)
+        // Handle paginated response from Django REST Framework
+        const stationsData = response.data.results || response.data
+        setStations(Array.isArray(stationsData) ? stationsData : [])
       } catch (error) {
         console.error('Error fetching charging stations:', error)
+        setStations([])
       }
     }
     fetchStations()
