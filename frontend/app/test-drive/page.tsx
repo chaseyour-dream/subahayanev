@@ -120,18 +120,16 @@ export default function TestDrivePage() {
                   <label htmlFor="vehicle_interest" className="block text-sm font-medium text-gray-700 mb-2">
                     Vehicle of Interest *
                   </label>
-                  <select
+                  <input
+                    type="text"
                     id="vehicle_interest"
                     name="vehicle_interest"
                     required
                     value={formData.vehicle_interest}
                     onChange={handleChange}
+                    placeholder="Enter vehicle name (e.g., Kaweii, Nevko)"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="">Select a vehicle</option>
-                    <option value="Kaweii">Kaweii</option>
-                    <option value="Nevko">Nevko</option>
-                  </select>
+                  />
                 </div>
               </div>
 

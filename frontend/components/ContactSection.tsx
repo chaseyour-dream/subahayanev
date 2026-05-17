@@ -210,13 +210,12 @@ export default function ContactSection() {
                 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address *
+                    Email Address
                   </label>
                   <input
                     type="email"
                     id="email"
                     name="email"
-                    required
                     value={enquiryData.email}
                     onChange={handleEnquiryChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"

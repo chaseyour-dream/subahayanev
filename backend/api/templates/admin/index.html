@@ -4,24 +4,25 @@
 {% block content %}
 
 <style>
-/* Make content area wider */
+/* Override admin content width */
 #content {
     max-width: none !important;
     width: 100% !important;
 }
 
 .dashboard-container {
-    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
     border-radius: 20px;
     padding: 50px;
     box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-    margin: -20px -20px 40px -20px;
-    width: calc(100% + 40px);
+    margin: 0 auto 40px;
+    max-width: 1600px;
+    width: 100%;
 }
 
 .dashboard-header {
     color: white;
-    margin-bottom: 50px;
+    margin-bottom: 45px;
     display: flex;
     align-items: center;
     gap: 25px;
@@ -30,7 +31,6 @@
 .dashboard-header .icon-large {
     font-size: 72px;
     opacity: 0.95;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
 }
 
 .dashboard-header-text h2 {
@@ -40,7 +40,6 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .dashboard-header-text p {
@@ -84,22 +83,23 @@
     left: 0;
     right: 0;
     height: 6px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .stat-card.visits::before {
-    background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .stat-card.contact::before {
-    background: linear-gradient(135deg, #be123c 0%, #e11d48 100%);
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
 .stat-card.testdrive::before {
-    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
 .stat-card.unread::before {
-    background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
 }
 
 .stat-card:hover {
@@ -107,54 +107,59 @@
     box-shadow: 0 20px 50px rgba(0,0,0,0.3);
 }
 
-.stat-card .icon-wrapper {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.stat-card .icon {
+    font-size: 64px;
     margin-bottom: 25px;
-    font-size: 40px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: block;
 }
 
-.stat-card.visits .icon-wrapper {
-    background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+.stat-card.visits .icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.stat-card.contact .icon-wrapper {
-    background: linear-gradient(135deg, #be123c 0%, #e11d48 100%);
+.stat-card.contact .icon {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.stat-card.testdrive .icon-wrapper {
-    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+.stat-card.testdrive .icon {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.stat-card.unread .icon-wrapper {
-    background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+.stat-card.unread .icon {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .stat-card .number {
     font-size: 52px;
     font-weight: 700;
-    margin: 20px 0;
+    margin: 18px 0;
     line-height: 1;
-    color: #0f172a;
+    color: #1e293b;
 }
 
 .stat-card .label {
     font-size: 19px;
     font-weight: 600;
     margin-bottom: 10px;
-    color: #1e293b;
+    color: #334155;
 }
 
 .stat-card .sublabel {
     font-size: 15px;
     margin-top: 10px;
-    color: #475569;
-    font-weight: 500;
+    color: #64748b;
 }
 
 /* Hide the default Django admin sections */
@@ -179,28 +184,28 @@
 
     <div class="dashboard-stats">
         <div class="stat-card visits">
-            <div class="icon-wrapper">🌐</div>
+            <div class="icon">🌐</div>
             <div class="number">{{ total_visits|default:0 }}</div>
             <div class="label">Total Website Visits</div>
             <div class="sublabel">All time visits tracked</div>
         </div>
         
         <div class="stat-card contact">
-            <div class="icon-wrapper">✉️</div>
+            <div class="icon">✉️</div>
             <div class="number">{{ total_contact_enquiries|default:0 }}</div>
             <div class="label">Contact Enquiries</div>
             <div class="sublabel">{{ unread_contact|default:0 }} unread message{{ unread_contact|pluralize }}</div>
         </div>
         
         <div class="stat-card testdrive">
-            <div class="icon-wrapper">🚗</div>
+            <div class="icon">🚗</div>
             <div class="number">{{ total_testdrive_enquiries|default:0 }}</div>
             <div class="label">Test Drive Enquiries</div>
             <div class="sublabel">{{ unread_testdrive|default:0 }} unread request{{ unread_testdrive|pluralize }}</div>
         </div>
         
         <div class="stat-card unread">
-            <div class="icon-wrapper">🔔</div>
+            <div class="icon">🔔</div>
             <div class="number">{{ total_unread|default:0 }}</div>
             <div class="label">Total Unread Messages</div>
             <div class="sublabel">Requires your attention</div>
